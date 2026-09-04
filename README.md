@@ -15,21 +15,23 @@ oscilloscope and spectrum analyzer reacting to the audio in real time.
  LED  ◆ · ■ ■~· · ■ ■ · · ◆ ■~· · ■ ■   ██······ 0.80
 ```
 
+The block above is the real interface, not a mockup: six tracks down the left,
+the 16-step grid, and each track's live level meter on the right.
+
 ## Run
 
 ```sh
-cd ~/projects/terminal-techno
+git clone https://github.com/matuskalis/terminal-techno.git
+cd terminal-techno
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
 ./run.sh                 # 130 BPM, default groove, starts stopped - hit space
 ./run.sh --bpm 145
 ./run.sh --list-devices
 ./run.sh --bounce out.wav --bars 8     # render to a file instead of playing
 ```
 
-First-time setup (already done in this directory):
-
-```sh
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-```
+`--bounce` needs no audio device, so it also works over SSH and in CI.
 
 Needs a terminal at least 60x24. Bigger terminal = taller scope and spectrum.
 
