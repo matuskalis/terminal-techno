@@ -53,6 +53,7 @@ class Ui:
         self.spectrum = np.zeros(48)
         self.scope_gain = 1.0
         self.status = "ready"
+        self.shown_board = eng.board
 
     # --- input ----------------------------------------------------------
     def handle(self, ch):
@@ -178,6 +179,9 @@ class Ui:
 
     # --- drawing --------------------------------------------------------
     def draw(self, scr):
+        if self.eng.board != self.shown_board:  # a queued swap or a crossfade landed since the last key
+            self.shown_board = self.eng.board
+            self._board_status()
         scr.erase()
         maxy, maxx = scr.getmaxyx()
         if maxy < 24 or maxx < 60:
