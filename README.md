@@ -172,7 +172,7 @@ pytest                       # 169 tests in a few seconds
 
 The tests open no audio device, no PortAudio and no curses screen. They cover the filters against the RBJ formulas, the pitch, envelope and tone of every voice, seeded determinism, the delay's echo positions and ping-pong sides, every step landing on its exact sample for any block size and swing, board arming on the bar line, the mix bus (headroom, pan law, meters, recording), the crossfade blend checked against `cos(a) * deck A + sin(a) * deck B`, and the offline bounce including its no-PortAudio path. The block-size test found a real bug: the bass voice wrapped its oscillator phase at 1.0 after every render call, but its sub oscillator runs at half the rate and needs 2.0. Whenever the saw had completed an odd number of cycles, the sub flipped sign at the block edge, so the bass sounded different for every block size. It is fixed and stays covered.
 
-GitHub Actions runs `ruff check`, `pytest` and a two-bar `--bounce` on Python 3.11 and 3.13 on Ubuntu, with no PortAudio installed.
+GitHub Actions runs `ruff check`, `pytest` and a two-bar `--bounce` on Python 3.11 and 3.13 on Ubuntu, with no PortAudio installed. The suite also passes on 3.14 here.
 
 ## Regenerating the media
 
