@@ -1,4 +1,26 @@
+# environments
 .venv/
+.venv-*/
+venv/
+
+# python
 __pycache__/
-*.wav
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# runtime output: the app's log, recordings (w key) and bounces
 techno.log
+*.wav
+out/
+
+# local notes
+CLAUDE.local.md
+
+# fonts for tools/capture_tui.py are downloaded, not stored
+tools/fonts/
+
+# os and editors
+.DS_Store
+.idea/
+.vscode/

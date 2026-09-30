@@ -53,6 +53,7 @@ class Ui:
         self.spectrum = np.zeros(48)
         self.scope_gain = 1.0
         self.status = "ready"
+        self.shown_board = eng.board
 
     # --- input ----------------------------------------------------------
     def handle(self, ch):
@@ -178,13 +179,15 @@ class Ui:
 
     # --- drawing --------------------------------------------------------
     def draw(self, scr):
+        if self.eng.board != self.shown_board:  # a queued swap or a crossfade landed since the last key
+            self.shown_board = self.eng.board
+            self._board_status()
         scr.erase()
         maxy, maxx = scr.getmaxyx()
         if maxy < 24 or maxx < 60:
             self._put(scr, 0, 0, "terminal too small: need 60x24", C_WARN)
             scr.refresh()
             return
-        eng = self.eng
         self.cell = 3 if maxx >= 92 else 2
         grid_x = 8
         row = 0
@@ -194,7 +197,7 @@ class Ui:
         row += 1
         self._ruler(scr, row, grid_x)
         row += 1
-        for i, spec in enumerate(TRACKS):
+        for i in range(len(TRACKS)):
             self._track_row(scr, row + i, grid_x, i, maxx)
         row += len(TRACKS)
         self._info(scr, row, maxx)

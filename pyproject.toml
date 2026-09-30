@@ -1,0 +1,17 @@
+# Tool settings only. The app is run from a checkout (see README), it is not packaged.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = [".", "tools"]
+extend-exclude = ["tools/fonts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*" = ["E402"]  # the tools put the repo root on sys.path before importing engine
