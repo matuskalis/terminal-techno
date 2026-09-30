@@ -27,7 +27,8 @@ Python 3.11 or newer. Live sound also needs PortAudio. The `sounddevice` wheel b
 ```sh
 git clone https://github.com/matuskalis/terminal-techno.git
 cd terminal-techno
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 
 ./run.sh                     # board 1 at 130 BPM, playing; space stops and starts
 ./run.sh --board 2 --bpm 140
@@ -61,19 +62,21 @@ Six voices in [dsp.py](dsp.py), mixed and sequenced in [engine.py](engine.py). T
 The filters are RBJ biquads run through `scipy.signal.lfilter`. While a cutoff moves, the coefficients are recomputed every 64 samples (1.3 ms at 48 kHz).
 
 ```
- KCK  CLP  HAT  OHT  BAS  LED       six voices, one block at a time
-  |    |    |    |    |    |
-  +----+----+----+----+----+        per track: volume, constant-power pan
-          |            |
-       dry bus      send bus        sends: CLP .28  HAT .10  OHT .22  BAS .05  LED .55  KCK 0
-          |            |
-          |      ping-pong delay    dotted eighth (346 ms at 130 BPM), feedback 0.33
-          |            |
-          +--- mix 0.30 +
+  KCK   CLP   HAT   OHT   BAS   LED     six voices, one block at a time
+   |     |     |     |     |     |
+   +-----+-----+--+--+-----+-----+      per track: volume, constant-power pan
                   |
-          tanh(0.9 x sum)           master soft clip; recording taps here
+        +---------+-------------+
+        |                       |
+      dry sum               send sum      CLP .28  HAT .10  OHT .22  BAS .05  LED .55  KCK 0
+        |                       |
+        |                ping-pong delay  dotted eighth (346 ms at 130 BPM), feedback 0.33
+        |                       |
+        +---------+-------------+       dry + 0.30 x wet
                   |
-             + key click            UI sounds, added after the tap
+          tanh(0.9 x sum)               master soft clip, recording taps here
+                  |
+             + key click                UI sounds, added after the tap
                   |
              sound card
 ```
