@@ -12,3 +12,6 @@ extend-exclude = ["tools/fonts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*" = ["E402"]  # the tools put the repo root on sys.path before importing engine
