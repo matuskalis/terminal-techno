@@ -25,14 +25,21 @@ def parse_args(argv):
     ap.add_argument("--device", default=None, help="output device name or index")
     ap.add_argument("--stopped", action="store_true", help="start paused instead of playing")
     ap.add_argument("--list-devices", action="store_true")
-    ap.add_argument("--bounce", metavar="FILE.wav", help="render the default pattern to a wav and exit")
+    ap.add_argument("--board", type=int, default=1, choices=range(1, 9), metavar="N", help="start on board N (1-8)")
+    ap.add_argument("--bounce", metavar="FILE.wav", help="render the chosen board to a wav and exit")
     ap.add_argument("--bars", type=int, default=8, help="bars to render with --bounce")
     return ap.parse_args(argv)
 
 
-def bounce(args):
+def new_engine(args):
     eng = Engine(args.samplerate)
     eng.set_bpm(args.bpm)
+    eng.board = args.board - 1  # set directly: arming a board would sound the UI confirmation blip
+    return eng
+
+
+def bounce(args):
+    eng = new_engine(args)
     eng.toggle_play()
     total = int(args.bars * 16 * eng.samples_per_step)
     blocks = []
@@ -193,26 +200,44 @@ def run_tui(stdscr, eng, audio, log):
         audio.close()
 
 
+def load_audio_library():
+    """sounddevice loads PortAudio when it is imported, so a missing library shows up here."""
+    try:
+        import sounddevice
+    except (ImportError, OSError) as exc:
+        raise SystemExit(
+            f"cannot load the audio library ({exc}).\n"
+            "Install PortAudio (Debian and Ubuntu: sudo apt install libportaudio2), "
+            "or render to a file without it: python techno.py --bounce out.wav"
+        ) from exc
+    return sounddevice
+
+
 def main(argv=None):
     args = parse_args(argv or sys.argv[1:])
     if args.bounce:
         bounce(args)
         return 0
 
-    import sounddevice as sd
+    sd = load_audio_library()
 
     if args.list_devices:
         print(sd.query_devices())
         return 0
 
-    eng = Engine(args.samplerate)
-    eng.set_bpm(args.bpm)
+    eng = new_engine(args)
     if not args.stopped:
         eng.toggle_play()
 
     log = open(LOG_PATH, "w", buffering=1)
     audio = AudioOut(eng, args.samplerate, args.blocksize, log)
-    audio.open(args.device)
+    try:
+        audio.open(args.device)
+    except Exception as exc:  # PortAudioError, or ValueError for a device name that matches nothing
+        raise SystemExit(
+            f"cannot open an audio output ({exc}).\n"
+            "List outputs with --list-devices, or render to a file with --bounce out.wav"
+        ) from exc
     try:
         curses.wrapper(run_tui, eng, audio, log)
     except Exception:

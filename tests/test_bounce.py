@@ -1,10 +1,12 @@
 """The offline path: write_wav and --bounce. None of this needs an audio device or PortAudio."""
 
 import sys
+import types
 import wave
 
 import numpy as np
-from helpers import SR
+import pytest
+from helpers import SR, rms
 
 import techno
 from engine import STEPS, write_wav
@@ -84,3 +86,47 @@ def test_a_seeded_bounce_is_byte_for_byte_reproducible(tmp_path):
 def test_bounce_needs_no_audio_library(tmp_path, monkeypatch):
     monkeypatch.setitem(sys.modules, "sounddevice", None)  # any import of it now raises ImportError
     assert techno.main(["--bounce", str(tmp_path / "out.wav"), "--bars", "1"]) == 0
+
+
+def test_the_board_flag_chooses_what_is_rendered(tmp_path):
+    def render(board):
+        np.random.seed(1)
+        path = tmp_path / f"board{board}.wav"
+        techno.main(["--bounce", str(path), "--bars", "1", "--board", str(board)])
+        return read_wav(path)[1].astype(np.float64)
+
+    simple, peak, empty = render(1), render(2), render(5)
+    assert not empty.any()  # board 5 has nothing on it, and arming it must not sound a UI blip
+    assert rms(peak) > rms(simple)  # the peak board adds hats and the acid line
+
+
+def test_the_board_flag_only_takes_one_to_eight():
+    assert techno.parse_args(["--board", "8"]).board == 8
+    for wrong in ("0", "9"):
+        with pytest.raises(SystemExit):
+            techno.parse_args(["--board", wrong])
+
+
+def test_a_missing_audio_library_says_how_to_render_offline(monkeypatch):
+    monkeypatch.setitem(sys.modules, "sounddevice", None)
+    with pytest.raises(SystemExit) as exit_info:
+        techno.main(["--stopped"])
+    assert "libportaudio2" in exit_info.value.code
+    assert "--bounce" in exit_info.value.code
+
+
+def test_an_output_that_will_not_open_says_how_to_list_the_devices(monkeypatch, tmp_path):
+    class RefusingStream:
+        def __init__(self, **kwargs):
+            raise ValueError("No output device matching 'nope'")
+
+    fake = types.SimpleNamespace(
+        query_devices=lambda device=None, kind=None: {"name": "fake"} if kind else [],
+        OutputStream=RefusingStream,
+    )
+    monkeypatch.setitem(sys.modules, "sounddevice", fake)
+    monkeypatch.setattr(techno, "LOG_PATH", str(tmp_path / "techno.log"))
+    with pytest.raises(SystemExit) as exit_info:
+        techno.main(["--stopped", "--device", "nope"])
+    assert "No output device matching 'nope'" in exit_info.value.code
+    assert "--list-devices" in exit_info.value.code
