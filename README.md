@@ -178,11 +178,14 @@ GitHub Actions runs `ruff check`, `pytest` and a two-bar `--bounce` on Python 3.
 
 ```sh
 pip install pillow pyte        # and ffmpeg with libmp3lame for the MP3
+mkdir -p tools/fonts && for f in Regular Bold; do curl -sLo tools/fonts/JetBrainsMono-$f.ttf \
+  https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-$f.ttf; done
+
 python tools/render_demo.py                          # docs/demo.mp3 and docs/signal.png
 python tools/capture_tui.py --gif docs/tui.gif       # docs/tui.png and docs/tui.gif
 ```
 
-The screenshot is the app's own output: `tools/capture_tui.py` runs the unchanged `techno.py` in a pseudo-terminal with [tools/null_audio](tools/null_audio/sounddevice.py) standing in for `sounddevice`, reads the screen with the `pyte` terminal emulator, and draws it cell by cell in JetBrains Mono with the Tomorrow Night palette (put the two TTFs in `tools/fonts/`, or pass `--font` and `--bold`). The frame for the still is the fullest one while the fader is near the middle.
+The screenshot is the app's own output: `tools/capture_tui.py` runs the unchanged `techno.py` in a pseudo-terminal with [tools/null_audio](tools/null_audio/sounddevice.py) standing in for `sounddevice`, reads the screen with the `pyte` terminal emulator, and draws it cell by cell in JetBrains Mono (SIL OFL) with the Tomorrow Night palette. The frame for the still is the fullest one while the fader is near the middle.
 
 ## Files
 
