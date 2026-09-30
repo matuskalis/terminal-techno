@@ -136,7 +136,7 @@ Measured on a MacBook Pro with an M1 Pro, Python 3.11.14, numpy 2.4.6, scipy 1.1
 | board 2 (`peak`) | 3.3 to 3.7% | 27 to 30x | 0.67 ms | 3.1 ms | 9 to 11% |
 | board 2 crossfading to 3 | 6.1 to 6.3% | 16x | 1.22 ms | 3.6 ms | 12 to 13% |
 
-One block is 21.3 ms of audio, so the worst block in any run used 17% of its budget. "Whole app" is the process CPU time from `tools/bench.py --app`, which runs the real `techno.py` in a pseudo-terminal against a null audio device. About 6 points of it are the screen: `Ui.draw` alone makes around 600 `addstr` calls and takes 1.1 ms of CPU per frame (about 3% of a core at 30 frames a second), and the rest is presumably curses writing the frame out, which I did not separate.
+One block is 21.3 ms of audio, so the worst block in any run used 17% of its budget. "Whole app" is the process CPU time from `tools/bench.py --app`, which runs the real `techno.py` in a pseudo-terminal against a null audio device (this mode needs `pip install pyte`). About 6 points of it are the screen: `Ui.draw` alone makes around 600 `addstr` calls and takes 1.1 ms of CPU per frame (about 3% of a core at 30 frames a second), and the rest is presumably curses writing the frame out, which I did not separate.
 
 Why the engine stays small:
 
@@ -167,7 +167,7 @@ Why the engine stays small:
 ```sh
 pip install -r requirements-dev.txt
 ruff check .
-pytest                       # 169 tests in a few seconds
+pytest                       # 171 tests in a few seconds
 ```
 
 The tests open no audio device, no PortAudio and no curses screen. They cover the filters against the RBJ formulas, the pitch, envelope and tone of every voice, seeded determinism, the delay's echo positions and ping-pong sides, every step landing on its exact sample for any block size and swing, board arming on the bar line, the mix bus (headroom, pan law, meters, recording), the crossfade blend checked against `cos(a) * deck A + sin(a) * deck B`, and the offline bounce including its no-PortAudio path. The block-size test found a real bug: the bass voice wrapped its oscillator phase at 1.0 after every render call, but its sub oscillator runs at half the rate and needs 2.0. Whenever the saw had completed an odd number of cycles, the sub flipped sign at the block edge, so the bass sounded different for every block size. It is fixed and stays covered.

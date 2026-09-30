@@ -4,7 +4,7 @@ Put this directory first on PYTHONPATH and the real techno.py runs unchanged: th
 "stream" is a thread that calls the audio callback at the pace a sound card would
 and throws the samples away. Nothing here touches PortAudio or a speaker.
 
-Used by tools/capture_tui.py and tools/measure_cpu.py.
+Used by tools/capture_tui.py and tools/bench.py.
 """
 
 import threading
