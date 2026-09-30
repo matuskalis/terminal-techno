@@ -33,6 +33,7 @@ FONT_DIR = ROOT / "tools" / "fonts"
 SAMPLE_RATE = 48000
 BLOCK = 1024  # the live callback's block size
 SEED = 2026
+BPM = 130.0
 TAIL_SECONDS = 2.5  # after the last bar, the voices and the delay ring out
 
 # The set, in bars counted from 0. Every line is a key a player would press.
@@ -40,7 +41,7 @@ ARM_PEAK_AT = 1  # ] arms board 2, it lands on the next bar line
 FILTER_FROM, FILTER_TO = 2, 6  # hold F: the acid filter opens from 0.45 to 1.6
 CROSSFADE_FROM, CROSSFADE_BARS = 6.25, 2  # t, then 0 held for two bars: board 3 takes over
 DELAY_FROM, DELAY_TO = 10, 12  # hold D: the delay mix rises from 0.30 to 0.55
-ARM_DUB_AT = 12  # ] again, board 4 lands on bar 13
+ARM_DUB_AT = 12  # ] again, board 4 lands on bar 13 (the 14th bar when counting from 1)
 STOP_AT = 14  # space
 FILTER_RANGE = (0.45, 1.6)
 DELAY_RANGE = (0.30, 0.55)
@@ -57,7 +58,6 @@ class Score:
         self.triggers = []  # (sample, track, accent, deck)
         self.board = []
         self.deck_b = []
-        self.xfade = []
 
 
 def watch_triggers(eng, score):
@@ -80,7 +80,8 @@ def watch_triggers(eng, score):
     return where
 
 
-def lerp(a, b, t):
+def ramp(a, b, t):
+    """a at t = 0 rising to b at t = 1, held at the ends."""
     return a + (b - a) * min(1.0, max(0.0, t))
 
 
@@ -88,6 +89,7 @@ def perform():
     """Play the set and return (stereo float32 audio, score)."""
     np.random.seed(SEED)
     eng = Engine(SAMPLE_RATE)
+    eng.set_bpm(BPM)
     eng.ui_sound = False  # the blips are UI feedback, not music
     score = Score()
     where = watch_triggers(eng, score)
@@ -106,7 +108,7 @@ def perform():
             eng.arm(1)
             armed_peak = True
         if FILTER_FROM <= now / bar(1) <= FILTER_TO:
-            eng.cutoff_scale = lerp(*FILTER_RANGE, (now - bar(FILTER_FROM)) / bar(FILTER_TO - FILTER_FROM))
+            eng.cutoff_scale = ramp(*FILTER_RANGE, (now - bar(FILTER_FROM)) / bar(FILTER_TO - FILTER_FROM))
         if not crossfade_started and now >= bar(CROSSFADE_FROM):
             eng.arm(2)
             eng.start_xfade()
@@ -117,7 +119,7 @@ def perform():
                 eng.nudge_xfade(0.05)
                 fader_moves += 1
         if DELAY_FROM <= now / bar(1) <= DELAY_TO:
-            eng.delay_mix = lerp(*DELAY_RANGE, (now - bar(DELAY_FROM)) / bar(DELAY_TO - DELAY_FROM))
+            eng.delay_mix = ramp(*DELAY_RANGE, (now - bar(DELAY_FROM)) / bar(DELAY_TO - DELAY_FROM))
         if not armed_dub and now >= bar(ARM_DUB_AT):
             eng.arm(3)
             armed_dub = True
@@ -129,7 +131,6 @@ def perform():
         blocks.append(eng.render(n))
         score.board.append(eng.board)
         score.deck_b.append(eng.deck_b)
-        score.xfade.append(eng.xfade)
         done += n
     return np.concatenate(blocks), score
 
@@ -229,7 +230,7 @@ class Figure:
         self.height = self.axis_y + 2 * ch + ch // 2
         self.img = Image.new("RGB", (self.width, self.height), BACKGROUND)
         self.draw = ImageDraw.Draw(self.img)
-        self.samples_per_bar = STEPS * 60.0 / 130.0 / 4.0 * SAMPLE_RATE
+        self.samples_per_bar = STEPS * 60.0 / BPM / 4.0 * SAMPLE_RATE
 
     def text(self, x, y, s, colour=TEXT, bold=False):
         font = self.fonts.bold if bold else self.fonts.regular
@@ -241,7 +242,7 @@ class Figure:
     def title(self):
         cw = self.fonts.cell_w
         self.text(cw, self.title_y, "TERMINAL TECHNO", MAGENTA, bold=True)
-        facts = f"demo set   130 BPM   {STOP_AT} bars and the tail   {len(self.audio) / SAMPLE_RATE:.1f} s"
+        facts = f"demo set   {BPM:.0f} BPM   {STOP_AT} bars and the tail   {len(self.audio) / SAMPLE_RATE:.1f} s"
         self.text(19 * cw, self.title_y, facts, CYAN)
         bar_w = 12 * cw
         x0 = self.right - bar_w - 5 * cw

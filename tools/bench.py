@@ -144,7 +144,6 @@ def main():
     ap.add_argument("--repeats", type=int, default=5)
     args = ap.parse_args()
     if args.app:
-        sys.path.insert(0, str(ROOT / "tools"))
         app(args.seconds)
     elif args.profile:
         profile(args.seconds)

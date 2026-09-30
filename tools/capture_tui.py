@@ -73,7 +73,7 @@ def pick_hero(frames):
         if match and low <= int(match.group(1)) <= high:
             candidates.append(cells)
     if not candidates:
-        raise SystemExit("no frame with the crossfade between 40 and 60 percent")
+        raise SystemExit(f"no frame with the crossfade between {low} and {high} percent")
     return max(candidates, key=liveness)
 
 
@@ -106,6 +106,8 @@ def main():
     args = ap.parse_args()
 
     regular, bold = find_fonts(args)
+    still_fonts = Fonts(regular, bold)  # before the session, so a missing font fails at once
+    gif_fonts = Fonts(regular, bold, cell_w=GIF_CELL_W)
     session = Session(args.cols, args.rows)
     try:
         play(session)
@@ -113,10 +115,10 @@ def main():
         session.close()
 
     Path(args.png).parent.mkdir(parents=True, exist_ok=True)
-    cells_to_image(pick_hero(session.frames), Fonts(regular, bold)).save(args.png, optimize=True)
+    cells_to_image(pick_hero(session.frames), still_fonts).save(args.png, optimize=True)
     print(f"wrote {args.png}")
     if args.gif:
-        save_gif(session.frames, Fonts(regular, bold, cell_w=GIF_CELL_W), args.gif)
+        save_gif(session.frames, gif_fonts, args.gif)
         print(f"wrote {args.gif}  {len(session.frames)} frames")
 
 
