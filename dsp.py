@@ -135,7 +135,7 @@ class Bass(Voice):
         freq = self.target + (self.freq - self.target) * glide
         self.freq = float(freq[-1])
         ph = self.phase + np.cumsum(freq) / self.sr
-        self.phase = float(ph[-1] % 1.0)
+        self.phase = float(ph[-1] % 2.0)  # the sub runs at half the saw's rate, so the pair repeats every 2 cycles
         t = (np.arange(n) + self.t) / self.sr
         saw = 2.0 * (ph % 1.0) - 1.0
         sub = np.sin(TWO_PI * ph * 0.5)
