@@ -43,6 +43,11 @@ def zero_crossings_per_second(x, sr=SR):
     return float(rising.sum() / (len(x) / sr))
 
 
+def undo_master(out, gain=0.9):
+    """Invert the master bus (tanh of the sum times the master gain) to get the mix before it."""
+    return np.arctanh(out) / gain
+
+
 def render_in_blocks(source, total, block):
     """Call source.render(n) in pieces of `block` frames (last piece shorter) and join the results."""
     pieces = []

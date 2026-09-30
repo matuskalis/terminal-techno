@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 import pytest
-from helpers import BAS, KCK, LED, SR, TriggerLog, pattern_with
+from helpers import BAS, KCK, LED, SR, TriggerLog, pattern_with, undo_master
 
 from engine import STEPS, TRACKS, Board, Engine, Pattern
 
@@ -143,26 +143,25 @@ def dry(position, board_a=A, board_b=B, frames=2048):
     eng.start_xfade()
     eng.xfade = position
     eng.toggle_play()
-    return np.arctanh(eng.render(frames)) / eng.master  # undo the master tanh and gain
+    return undo_master(eng.render(frames), eng.master)
+
+
+def live(board, frames=2048):
+    """The pre-master mix of one board played on its own, with no crossfade."""
+    eng = Engine(SR)
+    eng.ui_sound = False
+    eng.delay_mix = 0.0
+    eng.boards[0] = board
+    eng.toggle_play()
+    return undo_master(eng.render(frames), eng.master)
 
 
 def test_with_the_fader_at_a_only_deck_a_is_heard():
-    solo = dry(0.0, B, B)  # deck A plays the lead, deck B plays the lead too but is muted by the fader
-    engine_alone = Engine(SR)
-    engine_alone.ui_sound = False
-    engine_alone.delay_mix = 0.0
-    engine_alone.boards[0] = B
-    engine_alone.toggle_play()
-    np.testing.assert_allclose(solo, np.arctanh(engine_alone.render(2048)) / engine_alone.master, atol=1e-4)
+    np.testing.assert_allclose(dry(0.0), live(A), atol=1e-4)
 
 
-def test_deck_b_at_full_sounds_exactly_like_that_board_played_live():
-    engine_alone = Engine(SR)
-    engine_alone.ui_sound = False
-    engine_alone.delay_mix = 0.0
-    engine_alone.boards[0] = B
-    engine_alone.toggle_play()
-    np.testing.assert_allclose(dry(1.0), np.arctanh(engine_alone.render(2048)) / engine_alone.master, atol=1e-4)
+def test_with_the_fader_at_b_deck_b_sounds_exactly_like_that_board_played_live():
+    np.testing.assert_allclose(dry(1.0), live(B), atol=1e-4)
 
 
 @pytest.mark.parametrize("position", [0.1, 0.25, 0.5, 0.75, 0.9])

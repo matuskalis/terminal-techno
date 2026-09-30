@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 import pytest
-from helpers import BAS, CLP, HAT, KCK, LED, SR, TriggerLog, pattern_with, render_in_blocks
+from helpers import BAS, CLP, HAT, KCK, LED, SR, TriggerLog, pattern_with, render_in_blocks, undo_master
 
 from engine import STEPS, TRACKS, Board, Engine, Pattern
 
@@ -212,11 +212,6 @@ def test_a_muted_track_is_silent_and_an_unmuted_one_is_not():
     eng.toggle_play()
     eng.toggle_play()
     assert eng.render(4096).any()
-
-
-def undo_master(out, gain=0.9):
-    """Invert the master bus (tanh of the sum times the master gain) to get the mix before it."""
-    return np.arctanh(out) / gain
 
 
 def test_track_volume_scales_the_meter_and_the_mix():
