@@ -361,7 +361,7 @@ class Engine:
             self._trigger_deck(self.voices_b, self.boards[self.deck_b].pattern, step)
 
     def _trigger_deck(self, voices, p, step):
-        for i, spec in enumerate(TRACKS):
+        for i in range(len(TRACKS)):
             if not p.on[i, step]:
                 continue
             accent = bool(p.acc[i, step])

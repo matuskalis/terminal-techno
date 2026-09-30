@@ -184,7 +184,6 @@ class Ui:
             self._put(scr, 0, 0, "terminal too small: need 60x24", C_WARN)
             scr.refresh()
             return
-        eng = self.eng
         self.cell = 3 if maxx >= 92 else 2
         grid_x = 8
         row = 0
@@ -194,7 +193,7 @@ class Ui:
         row += 1
         self._ruler(scr, row, grid_x)
         row += 1
-        for i, spec in enumerate(TRACKS):
+        for i in range(len(TRACKS)):
             self._track_row(scr, row + i, grid_x, i, maxx)
         row += len(TRACKS)
         self._info(scr, row, maxx)

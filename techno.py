@@ -3,9 +3,9 @@
 
 import argparse
 import curses
-import threading
 import os
 import sys
+import threading
 import time
 import traceback
 
